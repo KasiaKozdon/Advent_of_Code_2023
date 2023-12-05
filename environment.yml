@@ -1,0 +1,9 @@
+name: aoc2023
+channels:
+  - defaults
+dependencies:
+  - jupyterlab
+  - numpy
+  - pandas
+  - pip
+  - python=3.10
