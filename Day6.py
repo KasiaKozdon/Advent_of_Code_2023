@@ -39,4 +39,9 @@ if __name__ == "__main__":
 
     answer = solve_puzzle_part1(data)
     print(f"Answer: {answer}")
+
+    data_part2 = [{"permitted_duration": 42686985, "winning_distance": 284100511221341}]
+
+    answer = solve_puzzle_part1(data_part2)
+    print(f"Answer: {answer}")
     
