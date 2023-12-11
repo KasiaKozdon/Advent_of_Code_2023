@@ -1,4 +1,5 @@
 import unittest
+import matplotlib.pyplot as plt
 import numpy as np
 
 
@@ -13,66 +14,55 @@ def find_start_coords(grid):
 
 
 def find_next_coords(grid, all_previous_coords):
-    current_coords = all_previous_coords[-1]
-    symbol = grid[(y := current_coords[0]), (x := current_coords[1])]
-    grid_width, grid_height = np.shape(grid)
-    # Each symbol can connect with limited set of neighbouring directions
-    connection_coords = []
-    if symbol == "|":
+    def check_above():
         if y > 0:  # check above
             if grid[(coords := (y-1, x))] in ["|", "7", "F", "S"]:
                 connection_coords.append((coords))
+
+    def check_below():
         if y < grid_height:  # check below
             if grid[(coords := (y+1, x))] in ["|", "L", "J", "S"]:
                 connection_coords.append((coords))
-    elif symbol == "-":
+
+    def check_left():
         if x > 0:  # check left
             if grid[(coords := (y, x-1))] in ["-", "L", "F", "S"]:
                 connection_coords.append((coords))
+
+    def check_right():
         if x < grid_width:  # check right
             if grid[(coords := (y, x+1))] in ["-", "J", "7", "S"]:
                 connection_coords.append((coords))
+
+    current_coords = all_previous_coords[-1]
+    symbol = grid[(y := current_coords[0]), (x := current_coords[1])]
+    grid_width, grid_height = np.shape(grid)
+
+    # Each symbol can connect with limited set of neighbouring directions
+    connection_coords = []
+    if symbol == "|":
+        check_above()
+        check_below()
+    elif symbol == "-":
+        check_left()
+        check_right()
     elif symbol == "L":
-        if x < grid_width:  # check right
-            if grid[(coords := (y, x+1))] in ["-", "J", "7"]:
-                connection_coords.append((coords))
-        if y > 0:  # check above
-            if grid[(coords := (y-1, x))] in ["|", "7", "F", "S"]:
-                connection_coords.append((coords))
+        check_right()
+        check_above()
     elif symbol == "J":
-        if x > 0:  # check left
-            if grid[(coords := (y, x-1))] in ["-", "L", "F", "S"]:
-                connection_coords.append((coords))
-        if y > 0:  # check above
-            if grid[(coords := (y-1, x))] in ["|", "7", "F", "S"]:
-                connection_coords.append((coords))
+        check_left()
+        check_above()
     elif symbol == "7":
-        if x > 0:  # check left
-            if grid[(coords := (y, x-1))] in ["-", "L", "F", "S"]:
-                connection_coords.append((coords))
-        if y < grid_height:  # check below
-            if grid[(coords := (y+1, x))] in ["|", "L", "J", "S"]:
-                connection_coords.append((coords))
+        check_left()
+        check_below()
     elif symbol == "F":
-        if x < grid_width:  # check right
-            if grid[(coords := (y, x + 1))] in ["-", "J", "7", "S"]:
-                connection_coords.append((coords))
-        if y < grid_height:  # check below
-            if grid[(coords := (y+1, x))] in ["|", "L", "J", "S"]:
-                connection_coords.append((coords))
+        check_right()
+        check_below()
     elif symbol == "S":
-        if x > 0:  # check left
-            if grid[(coords := (y, x - 1))] in ["-", "L", "F"]:
-                connection_coords.append((coords))
-        if x < grid_width:  # check right
-            if grid[(coords := (y, x + 1))] in ["-", "J", "7"]:
-                connection_coords.append((coords))
-        if y > 0:  # check above
-            if grid[(coords := (y - 1, x))] in ["|", "7", "F", "S"]:
-                connection_coords.append((coords))
-        if y < grid_height:  # check below
-            if grid[(coords := (y+1, x))] in ["|", "L", "J", "S"]:
-                connection_coords.append((coords))
+        check_left()
+        check_right()
+        check_above()
+        check_below()
     if len(all_previous_coords) > 1:
         connection_coords.remove(all_previous_coords[-2])  # avoid loop - remove step that go you to the current position
     return connection_coords[0]
@@ -93,6 +83,15 @@ def solve_puzzle_part1(puzzle_input):
     piping_grid = string_to_numpy(puzzle_input)
     journey = traverse_grid(piping_grid)
     return len(journey)//2
+
+
+def solve_puzzle_part2(puzzle_input):
+    piping_grid = string_to_numpy(puzzle_input)
+    journey = traverse_grid(piping_grid)
+    y = np.asarray(journey)[:, 0]
+    x = np.asarray(journey)[:, 1]
+    plt.plot(x, y)
+    return None
 
 
 class Test(unittest.TestCase):
@@ -121,5 +120,9 @@ if __name__ == "__main__":
 
     with open("inputs/input10.txt") as f:
         data = f.read().strip()
+
     answer = solve_puzzle_part1(data)
+    print(f"Answer: {answer}")
+
+    answer = solve_puzzle_part2(data)
     print(f"Answer: {answer}")
