@@ -4,6 +4,7 @@ import numpy as np
 import numpy.typing as npt
 
 
+# TODO: optimise
 def pattern_to_numpy(pattern):
     n_columns = pattern.index("\n")
     pattern = pattern.replace("\n", "")
@@ -25,6 +26,60 @@ def vertical_reflexion_column_idx(pattern: npt.NDArray) -> int:
                     correct_axes.remove(column)
                     break
 
+    if len(correct_axes) > 0:
+        return correct_axes[0] + 1
+    else:
+        return 0
+
+
+def smudged_vertical_reflexion_column_idx(pattern: npt.NDArray) -> int:
+    potential_axes = []
+    smudge_tracking = []
+    for column in range(np.shape(pattern)[1]-1):
+        if (smudge := sum(pattern[:, column] != pattern[:, column+1])) <= 1:
+            potential_axes.append(column)
+            smudge_tracking.append(smudge)
+    correct_axes = potential_axes.copy()
+    for idx, column in enumerate(potential_axes):
+        for col in range(0, column):
+            stride = (column - col) * 2 + 1
+            if col + stride < np.shape(pattern)[1]:
+                if (smudge := sum(pattern[:, col] != pattern[:, col+stride])):
+                    smudge_tracking[idx] += smudge
+                    if smudge_tracking[idx] > 1:
+                        correct_axes.remove(column)
+                        break
+
+    for idx, pa in enumerate(potential_axes):
+        if smudge_tracking[idx] == 0:
+            correct_axes.remove(pa)
+    if len(correct_axes) > 0:
+        return correct_axes[0] + 1
+    else:
+        return 0
+
+
+def smudged_horizontal_reflexion_column_idx(pattern: npt.NDArray) -> int:
+    potential_axes = []
+    smudge_tracking = []
+    for row in range(np.shape(pattern)[0]-1):
+        if (smudge := sum(pattern[row, :] != pattern[row+1, :])) <= 1:
+            potential_axes.append(row)
+            smudge_tracking.append(smudge)
+    correct_axes = potential_axes.copy()
+    for idx, row in enumerate(potential_axes):
+        for r in range(0, row):
+            stride = (row - r) * 2 + 1
+            if r + stride < np.shape(pattern)[0]:
+                if (smudge := sum(pattern[r, :] != pattern[r+stride, :])):
+                    smudge_tracking[idx] += smudge
+                    if smudge_tracking[idx] > 1:
+                        correct_axes.remove(row)
+                        break
+
+    for idx, pa in enumerate(potential_axes):
+        if smudge_tracking[idx] == 0:
+            correct_axes.remove(pa)
     if len(correct_axes) > 0:
         return correct_axes[0] + 1
     else:
@@ -141,4 +196,12 @@ if __name__ == "__main__":
     answer = sum(vertical_reflections) + sum([h * 100 for h in horizontal_reflections])
     print(f"Answer: {answer}")
 
-
+    # Part 2
+    vertical_reflections = []
+    horizontal_reflections = []
+    for datum in data:
+        datum = pattern_to_numpy(datum)
+        vertical_reflections.append(smudged_vertical_reflexion_column_idx(datum))
+        horizontal_reflections.append(smudged_horizontal_reflexion_column_idx(datum))
+    answer = sum(vertical_reflections) + sum([h * 100 for h in horizontal_reflections])
+    print(f"Answer: {answer}")
