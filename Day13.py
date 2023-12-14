@@ -5,6 +5,7 @@ import numpy.typing as npt
 
 
 # TODO: optimise
+
 def pattern_to_numpy(pattern):
     n_columns = pattern.index("\n")
     pattern = pattern.replace("\n", "")
@@ -195,6 +196,7 @@ if __name__ == "__main__":
         horizontal_reflections.append(horizontal_reflexion_column_idx(datum))
     answer = sum(vertical_reflections) + sum([h * 100 for h in horizontal_reflections])
     print(f"Answer: {answer}")
+
 
     # Part 2
     vertical_reflections = []
