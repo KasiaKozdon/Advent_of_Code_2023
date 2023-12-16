@@ -30,6 +30,9 @@ class Beam:
         new_beam.step()
         return new_beam
 
+    def get_position_hash(self):
+        return f";{self.coord_y},{self.coord_x},{self.heading_y},{self.heading_x};"
+
 
 def string_to_array(layout_string) -> list[list]:
     layout = layout_string.strip().split("\n")
@@ -44,16 +47,13 @@ def tile_in_grid(coord_x, coord_y, grid_width, grid_height):
 
 
 def get_layout_size(layout):
-    layout = string_to_array(layout)
     grid_width = len(layout[0])
     grid_height = len(layout)
     return grid_height, grid_width
 
 
 def count_visited_tiles(layout, starting_beam):
-    layout = string_to_array(layout)
-    grid_width = len(layout[0])
-    grid_height = len(layout)
+    grid_height, grid_width= get_layout_size(layout)
     visited_tiles = np.zeros((grid_height, grid_width))
     visited_tiles_history = ""
     beams = [starting_beam]
@@ -78,7 +78,7 @@ def count_visited_tiles(layout, starting_beam):
                 if beam.heading_y:
                     beam.turn_90_degrees_clockwise()
                     beams.append(beam.split_yourself())
-            current_position_hash = f";{beam.coord_y},{beam.coord_x},{beam.heading_y},{beam.heading_x};"
+            current_position_hash = beam.get_position_hash()
             if current_position_hash in visited_tiles_history:
                 break  # break tracking beam in a loop
             visited_tiles[beam.coord_y, beam.coord_x] += 1
@@ -100,9 +100,8 @@ class Test(unittest.TestCase):
                            ".-.-/..|..\n"
                            ".|....-|.\\\n"
                            "..//.|....")
-        coord_x = 0
-        coord_y = 0
-        beam = Beam(coord_x, coord_y, heading_x=1, heading_y=0)
+        provided_layout = string_to_array(provided_layout)
+        beam = Beam(coord_x=0, coord_y=0, heading_x=1, heading_y=0)
         predicted_answer = count_visited_tiles(provided_layout, beam)
         expected_answer = 46
         self.assertEqual(expected_answer, predicted_answer)
@@ -113,11 +112,10 @@ if __name__ == "__main__":
 
     with open("inputs/input16.txt") as f:
         data = f.read()
+    data = string_to_array(data)
 
     # Part 1
-    coord_x = 0
-    coord_y = 0
-    beam = Beam(coord_x, coord_y, heading_x=1, heading_y=0)
+    beam = Beam(coord_x=0, coord_y=0, heading_x=1, heading_y=0)
     answer = count_visited_tiles(data, beam)
     print(f"Answer to part 1: {answer}")
 
@@ -126,24 +124,16 @@ if __name__ == "__main__":
     height, width = get_layout_size(data)
 
     # left edge
-    coord_x, heading_x, heading_y = 0, 1, 0
-    for coord_y in range(0, height):
-        beam = Beam(coord_x, coord_y, heading_x, heading_y)
-        possible_answers.append(count_visited_tiles(data, beam))
+    possible_answers.extend([count_visited_tiles(data, Beam(
+        coord_x=0, coord_y=left_edge, heading_x=1, heading_y=0)) for left_edge in range(0, height)])
     # right edge
-    coord_x, heading_x, heading_y = width-1, -1, 0
-    for coord_y in range(0, height):
-        beam = Beam(coord_x, coord_y, heading_x, heading_y)
-        possible_answers.append(count_visited_tiles(data, beam))
+    possible_answers.extend([count_visited_tiles(data, Beam(
+        coord_x=width-1, coord_y=right_edge, heading_x=-1, heading_y=0)) for right_edge in range(0, height)])
     # top edge
-    coord_y, heading_x, heading_y = 0, 0, 1
-    for coord_x in range(0, width):
-        beam = Beam(coord_x, coord_y, heading_x, heading_y)
-        possible_answers.append(count_visited_tiles(data, beam))
+    possible_answers.extend([count_visited_tiles(data, Beam(
+        coord_x=top_edge, coord_y=0, heading_x=0, heading_y=1)) for top_edge in range(0, width)])
     # bottom edge
-    coord_y, heading_x, heading_y = height-1, 0, -1
-    for coord_x in range(0, width):
-        beam = Beam(coord_x, coord_y, heading_x, heading_y)
-        possible_answers.append(count_visited_tiles(data, beam))
+    possible_answers.extend([count_visited_tiles(data, Beam(
+        coord_x=bottom_edge, coord_y=height-1, heading_x=0, heading_y=-1)) for bottom_edge in range(0, width)])
 
     print(f"Answer to part 2: {max(possible_answers)}")
