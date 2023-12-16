@@ -43,15 +43,20 @@ def tile_in_grid(coord_x, coord_y, grid_width, grid_height):
     return y_legal and x_legal
 
 
-def count_visited_tiles(layout):
+def get_layout_size(layout):
+    layout = string_to_array(layout)
+    grid_width = len(layout[0])
+    grid_height = len(layout)
+    return grid_height, grid_width
+
+
+def count_visited_tiles(layout, starting_beam):
     layout = string_to_array(layout)
     grid_width = len(layout[0])
     grid_height = len(layout)
     visited_tiles = np.zeros((grid_height, grid_width))
-    visited_tiles_history = []
-    coord_x = 0
-    coord_y = 0
-    beams = [Beam(coord_x, coord_y, heading_x=1, heading_y=0)]
+    visited_tiles_history = ""
+    beams = [starting_beam]
     for beam in beams:
         while tile_in_grid(beam.coord_x, beam.coord_y, grid_width, grid_height):
             tile = layout[beam.coord_y][beam.coord_x]
@@ -73,13 +78,11 @@ def count_visited_tiles(layout):
                 if beam.heading_y:
                     beam.turn_90_degrees_clockwise()
                     beams.append(beam.split_yourself())
-            if len(visited_tiles_history) > 2:
-                previous_visits_to_the_tile = [i for i, x in enumerate(visited_tiles_history) if x == (beam.coord_y, beam.coord_x)]
-                possible_loops = [i for i in previous_visits_to_the_tile if visited_tiles_history[i-1] == visited_tiles_history[-1]]
-                if len(possible_loops):
-                    break  # break tracking beam in a loop
+            current_position_hash = f";{beam.coord_y},{beam.coord_x},{beam.heading_y},{beam.heading_x};"
+            if current_position_hash in visited_tiles_history:
+                break  # break tracking beam in a loop
             visited_tiles[beam.coord_y, beam.coord_x] += 1
-            visited_tiles_history.append((beam.coord_y, beam.coord_x))
+            visited_tiles_history = visited_tiles_history + current_position_hash
             beam.step()
     plt.imshow(visited_tiles)
     return len(visited_tiles.nonzero()[0])
@@ -97,7 +100,10 @@ class Test(unittest.TestCase):
                            ".-.-/..|..\n"
                            ".|....-|.\\\n"
                            "..//.|....")
-        predicted_answer = count_visited_tiles(provided_layout)
+        coord_x = 0
+        coord_y = 0
+        beam = Beam(coord_x, coord_y, heading_x=1, heading_y=0)
+        predicted_answer = count_visited_tiles(provided_layout, beam)
         expected_answer = 46
         self.assertEqual(expected_answer, predicted_answer)
 
@@ -108,5 +114,36 @@ if __name__ == "__main__":
     with open("inputs/input16.txt") as f:
         data = f.read()
 
-    answer = count_visited_tiles(data)
+    # Part 1
+    coord_x = 0
+    coord_y = 0
+    beam = Beam(coord_x, coord_y, heading_x=1, heading_y=0)
+    answer = count_visited_tiles(data, beam)
     print(f"Answer to part 1: {answer}")
+
+    # Part 2
+    possible_answers = []
+    height, width = get_layout_size(data)
+
+    # left edge
+    coord_x, heading_x, heading_y = 0, 1, 0
+    for coord_y in range(0, height):
+        beam = Beam(coord_x, coord_y, heading_x, heading_y)
+        possible_answers.append(count_visited_tiles(data, beam))
+    # right edge
+    coord_x, heading_x, heading_y = width-1, -1, 0
+    for coord_y in range(0, height):
+        beam = Beam(coord_x, coord_y, heading_x, heading_y)
+        possible_answers.append(count_visited_tiles(data, beam))
+    # top edge
+    coord_y, heading_x, heading_y = 0, 0, 1
+    for coord_x in range(0, width):
+        beam = Beam(coord_x, coord_y, heading_x, heading_y)
+        possible_answers.append(count_visited_tiles(data, beam))
+    # bottom edge
+    coord_y, heading_x, heading_y = height-1, 0, -1
+    for coord_x in range(0, width):
+        beam = Beam(coord_x, coord_y, heading_x, heading_y)
+        possible_answers.append(count_visited_tiles(data, beam))
+
+    print(f"Answer to part 2: {max(possible_answers)}")
